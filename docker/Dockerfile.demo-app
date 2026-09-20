@@ -1,0 +1,16 @@
+# VisionNOC demo backend — Dockerfile
+#
+# STATUS: NOT VERIFIED (no Docker daemon in the build sandbox — see
+# docs/PROJECT_STATUS.md). This is a trivial stdlib HTTP service that
+# exposes /health and a Prometheus-style /metrics endpoint, purely to
+# give the Compose stack a real container to stop/restart in a live
+# demo (docker-compose.yml wires this up). BLOCKED — USER ACTION
+# REQUIRED: build and run this once Docker is available and confirm it
+# behaves as described here.
+FROM python:3.12-slim
+WORKDIR /app
+COPY docker/demo_app.py .
+EXPOSE 9000
+HEALTHCHECK --interval=5s --timeout=2s --retries=3 \
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:9000/health', timeout=2)" || exit 1
+CMD ["python3", "demo_app.py"]

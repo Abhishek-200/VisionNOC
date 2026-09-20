@@ -1,0 +1,11 @@
+# STATUS: NOT VERIFIED (no Grafana run in this sandbox)
+apiVersion: 1
+providers:
+  - name: "VisionNOC"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      path: /etc/grafana/provisioning/dashboards

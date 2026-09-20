@@ -1,0 +1,33 @@
+{
+  "title": "VisionNOC Demo Cluster",
+  "uid": "visionnoc-demo",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Backend Service",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "targets": [{"expr": "application_up{job=\"visionnoc-backend\"}"}],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "green", "value": 1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "graph",
+      "title": "Request Rate",
+      "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0},
+      "targets": [{"expr": "rate(application_requests_total[1m])"}]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

@@ -1,0 +1,38 @@
+# VisionNOC API — Dockerfile
+#
+# STATUS: NOT VERIFIED. This sandbox has no Docker daemon (`docker`
+# binary is not present — see docs/PROJECT_STATUS.md), so this image has
+# not been built or run. It is written to the best of the author's
+# knowledge and follows the same dependency set as requirements.txt.
+# BLOCKED — USER ACTION REQUIRED: run `docker build -f docker/Dockerfile.api -t visionnoc-api .`
+# from the repo root and report any errors so they can be fixed.
+
+FROM python:3.12-slim
+
+# System deps for opencv-python (headless variant avoids GUI libs, but
+# opencv-python's wheel still needs a couple of shared libs at runtime)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+# Only the verified-installable subset is required at runtime for the
+# stdlib-based API; fastapi/uvicorn/pydantic/anthropic are optional
+# upgrades (see requirements.txt comments).
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENV AI_PROVIDER=heuristic
+ENV VISIONNOC_API_HOST=0.0.0.0
+ENV VISIONNOC_API_PORT=8000
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)" || exit 1
+
+CMD ["python3", "-m", "api.server"]

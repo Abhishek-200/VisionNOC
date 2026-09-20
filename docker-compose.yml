@@ -1,0 +1,84 @@
+# VisionNOC — docker-compose.yml
+#
+# STATUS: NOT VERIFIED. This sandbox has no Docker/Compose installed
+# (see docs/PROJECT_STATUS.md), so this file has never actually been
+# run with `docker compose up`. It is written carefully and each image
+# it depends on (except prom/prometheus and grafana/grafana, which are
+# official upstream images) is defined in this repo. BLOCKED — USER
+# ACTION REQUIRED: run it, report any errors, and this can be iterated
+# on and fixed.
+#
+# Services:
+#   demo-app    - tiny backend the incident is staged against (docker/demo_app.py)
+#   prometheus  - scrapes demo-app's /metrics
+#   grafana     - dashboard VisionNOC's OpenCV pipeline analyzes screenshots of
+#   vision-api  - VisionNOC's own API (vision + agent + incidents)
+#
+# Trigger the demo failure with:
+#   docker stop visionnoc-demo-app
+# and recover it with:
+#   docker start visionnoc-demo-app
+# (mirrors what agent/tools.py's restart_backend() does against the
+# simulated cluster when Docker isn't available)
+
+services:
+  demo-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.demo-app
+    container_name: visionnoc-demo-app
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: visionnoc-prometheus
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - demo-app
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: visionnoc-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=visionnoc
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  vision-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: visionnoc-api
+    environment:
+      - AI_PROVIDER=heuristic
+      - VISIONNOC_API_HOST=0.0.0.0
+      - VISIONNOC_API_PORT=8000
+      - VISIONNOC_HEALTH_URL=http://demo-app:9000/health
+      - PROMETHEUS_URL=http://prometheus:9090
+      - VISIONNOC_API_TOKEN=${VISIONNOC_API_TOKEN:-}
+    volumes:
+      - visionnoc-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock  # lets agent/tools.py talk to real Docker
+    ports:
+      - "8000:8000"
+    depends_on:
+      - demo-app
+      - prometheus
+
+volumes:
+  visionnoc-data:

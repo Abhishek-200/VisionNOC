@@ -1,0 +1,17 @@
+# VisionNOC — docker/prometheus/prometheus.yml
+# STATUS: NOT VERIFIED (no Prometheus run in this sandbox — see docs/PROJECT_STATUS.md)
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "visionnoc-backend"
+    static_configs:
+      - targets: ["demo-app:9000"]
+        labels:
+          service: "backend"
+
+  - job_name: "visionnoc-api"
+    static_configs:
+      - targets: ["vision-api:8000"]
+        labels:
+          service: "vision-api"
