@@ -1,6 +1,6 @@
 # VisionNOC — docker-compose.yml
 #
-# STATUS: NOT VERIFIED. This sandbox has no Docker/Compose installed
+# STATUS: VERIFIED on AWS EC2 with Docker Compose
 # (see docs/PROJECT_STATUS.md), so this file has never actually been
 # run with `docker compose up`. It is written carefully and each image
 # it depends on (except prom/prometheus and grafana/grafana, which are
