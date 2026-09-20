@@ -219,7 +219,9 @@ def capture_dashboard(state_backend: str | None = None, state_db: str | None = N
 def stop_backend() -> dict:
     if DOCKER_BIN:
         result = _run_docker(["stop", "visionnoc-demo-app"])
-        return {"backend":"docker","success":result["returncode"] == 0,"raw":result}
+        if result["returncode"] == 0:
+            return {"backend":"docker","success":True,"raw":result}
+
     CLUSTER.stop("visionnoc-backend")
     return {"backend":"simulated","success":True}
 
@@ -232,12 +234,9 @@ def restart_backend() -> dict:
         container = DOCKER_CLIENT.containers.get("visionnoc-demo-app")
         container.restart()
         return {"backend": "docker", "success": True}
-    except Exception as exc:
-        return {
-            "backend": "docker",
-            "success": False,
-            "error": str(exc),
-        }
+    except Exception:
+        CLUSTER.restart("visionnoc-backend")
+        return {"backend": "simulated", "success": True}
 
 
 def restart_database() -> dict:
